@@ -1,0 +1,188 @@
+.joboffer{
+    display: flex;
+
+}
+
+.joboffertitle{
+    font-weight: 500;
+    color: #5D5E5E;
+    margin-right: 1em;
+}
+
+.jobofferdesc{
+    font-size: 0.8em;
+    color: #7F7F7F;
+}
+
+.openjobsp{
+    font-weight: 500;
+    color: #5D5E5E;
+    margin-top: 2em;
+   
+}
+
+.jobofferSpace{
+    margin: 0 auto 4.7em auto;
+    justify-content: center;
+    align-items: center;
+    width: 66%;
+
+}
+
+#name, #surname, #date,#email, #phone, #selectopt{
+    width: 100%;
+    padding: 0.6em 0 0.6em 0.9em;
+    border: 2px solid #DCDCDC;
+    margin-bottom: 1em;
+    background-color: #F7F7F7;   
+}
+
+#selectopt{
+    color: #7F7F7F;
+}
+
+#cv,#img{
+    color: #7F7F7F;
+    margin-bottom: 1em;
+    
+}
+
+.jobtitlepage{
+    font-size: 1.5em;
+    margin: 5.4em 0em 1.5em 4em;
+    white-space:nowrap ;
+    width: 2%;
+    border-bottom: 2px solid #171719;;
+     
+}
+
+
+.upload{
+    margin-bottom: 0.5;
+    margin-top: 1em;
+    font-weight: 700;
+}
+
+input[type=file]::file-selector-button {
+    border: 2px solid #171719;
+    background-color: #171719;
+    color: white;
+    padding: 0.9em;
+    font-size: 0.8em;
+  
+}
+
+ .apply, .notify {
+    background-color: #171719;
+    border: 1px solid #F7F7F7;
+    cursor: pointer;
+    color: #F7F7F7;
+    padding: 0.5em 5em;
+ }
+
+  .notify {
+      padding: 0.5em 4.3em;
+  }
+
+ .applybtn{
+    text-align: right;
+    margin-bottom: 2em;
+ }
+
+.notifier{
+    display: flex;
+    flex-direction: row;
+    margin: 0 auto 0 auto;
+    justify-content: center;
+    align-items: center;
+    width: 66%; 
+    padding: 5.5em 0 4.5em 0;
+    
+}
+.notifierSpace{
+    background-color: #EAEAEA;
+}
+
+.notifier  > p{
+    color: #7F7F7F;
+    font-size: 0.8em;
+    margin-right: 3em;
+}
+
+.notifyForm{
+    width: 100%;
+}
+
+#email1{
+    border: 2px solid #DCDCDC;
+    width: 60%;
+    background-color: #F7F7F7;
+    color: #7F7F7F;
+    padding: 0.6em 0 0.6em 0.7em;
+}
+
+.notifybtn{
+    display: flex;
+    float: right;
+}
+
+
+@media only screen and (min-width: 1px) and (max-width: 600px) {
+.notifier, .joboffer{
+    flex-direction: column !important;
+
+}
+
+.jobofferSpace{
+    width: 85% !important;
+}
+
+.apply{
+    padding:0.2em 2.2em;
+}
+
+.notifier{
+    width: 85%;
+}
+ 
+#email1{
+    width: 100%;
+    justify-content: center;
+    margin: 0 auto 2em auto;
+}
+
+.notify{
+    padding: 0.2em 2.2em;
+}
+.notifybtn{
+    text-align: right;
+}
+.jobtitlepage{
+    margin-left: 1.2em;
+}
+
+}
+
+@media only screen and (min-width: 601px) and (max-width: 999px) {
+.notifybtn{
+    margin-top: 2em;
+}
+
+#email1{
+    width: 100%;
+}
+.jobofferSpace,.notifier{
+    width: 80%;
+}
+.jobtitlepage{
+    margin-left: 2.9em;
+}
+}
+
+
+@media only screen and (min-width: 1000px) and (max-width: 1200px) {
+#email1{
+    width: 45%;
+}
+}
+
