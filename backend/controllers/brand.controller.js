@@ -1,9 +1,17 @@
 const Brand = require('../models/brand.model');
 const validation = require('../validators/brand.validation');
 const slugify = require('slugify');
+const {MongoClient} = require("mongodb");
+const client = new MongoClient(process.env.DATABASE);
+// client.connect().then(() => console.log("connected to db"));
+
+
+
 const { errorHandler } = require('../helpers/dbErrorHandler');
 const _ = require('lodash');
 const fs = require('fs');
+// const paginatedResults = require('../middleware/paginate');
+const paginator = require('../middleware/paginate');
 
 
 exports.create = async (req, res) => {   
@@ -28,12 +36,14 @@ exports.create = async (req, res) => {
             address: req.body.address,
             phone: req.body.phone,
             onlineLink: req.body.onlineLink,
+            email: req.body.email,
+            floor: req.body.floor,
+            floor_en: req.body.floor_en,
 
             info_en:  req.body.info_en,
             address_en: req.body.address_en,
             onlineLink_en: req.body.onlineLink_en,
 
-            email: req.body.email,
             logo: req.files.logo[0].path,
             planimetry: req.files.planimetry[0].path,
             postedBy: req.user._id,
@@ -66,6 +76,8 @@ exports.update = async (req, res) => {
         if(req.body.address) update.address = req.body.address;
         if(req.body.phone) update.phone = req.body.phone;
         if(req.body.email) update.email = req.body.email;
+        if(req.body.floor) update.floor = req.body.floor;
+        if(req.body.floor_en) update.floor_en = req.body.floor_en;
 
         if(req.body.info_en) update.info_en = req.body.info_en;
         if(req.body.address_en) update.address_en = req.body.address_en;
@@ -101,16 +113,15 @@ exports.update = async (req, res) => {
 
 exports.list = async (req, res) => {
     try {
-        const brand = await Brand.find({})
+        const brands = await Brand.find({})
         .populate('postedBy', '_id name username')
-        .select('_id name info address phone email info_en address_en onlineLink_en logo planimetry onlineLink slug postedBy createdAt updatedAt')
+        .select('_id name info address phone email floor floor_en info_en address_en onlineLink_en logo planimetry onlineLink slug postedBy createdAt updatedAt')
 
-        res.status(200).json(brand);
+        res.status(200).json(brands);
     } catch (error) {
     res.status(500).json( { error: error.message });
     }
 };
-
 
 exports.read = async (req, res) => {
     try {
@@ -118,7 +129,7 @@ exports.read = async (req, res) => {
 
         const brand = await Brand.findOne({slug})
         .populate('postedBy', '_id name username')
-        .select('_id name info address phone email info_en address_en onlineLink_en logo planimetry onlineLink slug postedBy createdAt updatedAt')
+        .select('_id name info address phone email floor floor_en info_en address_en onlineLink_en logo planimetry onlineLink slug postedBy createdAt updatedAt')
 
         if (!brand) return res.status(400).json({ error: "Brand does not exist." });
 
@@ -161,6 +172,56 @@ exports.listSearch = (req, res) => {
         ).select('-planimetry -info -address -email -phone -onlineLink');
     }
 };
+
+exports.autocomplete = async (req, res) => {
+    try {
+        if (req.query.brand) {
+            let results;
+            // if (req.query.brand.includes(",") || req.query.brand.includes(" ")) {
+              results = await client
+                .db("AlbiMallDatabase")
+                .collection("brands")
+                .aggregate([
+                  {
+                    $search: {
+                      index: "autocomplete",
+                      autocomplete: {
+                        query: req.query.brand,
+                        path: "name",
+                        fuzzy: {
+                          maxEdits: 1,
+                        },
+                        tokenOrder: "sequential",
+                      },
+                    },
+                  },
+                  {
+                    $project: {
+                      name: 1,
+                      logo: 1,
+                      slug: 1,
+                      _id: 1,
+                      score: { $meta: "searchScore" },
+                    },
+                  },
+                  {
+                    $limit: 10,
+                  },
+                ])
+                .toArray();
+      
+              return res.send(results);
+ 
+      }
+
+      res.send([]);
+        
+  }catch (error) {
+    console.error(error);
+    res.send([]);
+  }
+};
+
 
 
 

@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router();
 const Multer = require('../middleware/multer');
-const {create, list, remove, update, read, listSearch} = require('../controllers/brand.controller.js');
+const {create, list, remove, update, read, listSearch, autocomplete} = require('../controllers/brand.controller.js');
 
 //Authorization
 const authorize = require('../middleware/authorize')
@@ -21,6 +21,8 @@ router.get('/brands', paginator.paginatedResults(Brand), (req, res) => {
 });
 
 router.get('/brands/search', listSearch);
+
+router.get('/brands/autocomplete', autocomplete);
 
 
 module.exports = router; 

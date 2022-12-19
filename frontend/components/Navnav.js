@@ -34,11 +34,7 @@ function Navnav({ setLangType, langType }) {
               </Link>
 
               <div className="navsearch d-flex">
-                <img
-                  className="searchic"
-                  src="/images/360 ikona-01.svg"
-                  alt=""
-                />
+            
                 <select
                   onChange={handleLanguageChange}
                   style={{ marginLeft: 100 }}

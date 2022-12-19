@@ -6,7 +6,8 @@ import ReCAPTCHA from 'react-google-recaptcha'
 import MainLayout from '../components/MainLayout';
 import { useEffect } from "react";
 import Swal from 'sweetalert2';
-
+import {useGoogleReCaptcha} from "react-google-recaptcha-v3";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
 
 
@@ -37,26 +38,84 @@ const Ankesat = () =>{
         setValues({ ...values, message: '',  error: '', [name]: e.target.value });
     };
 
+    const { executeRecaptcha } = useGoogleReCaptcha();
+    // const handleSubmit = e => {
+    //   e.preventDefault();
+    //     setValues({ ...values, message: '', error: '' });
+    //     contactFormSendEmail({ email, name, description }).then(data => {
+    //         if (data.error) {
+    //             setValues({ ...values, error: data.error });
+    //         } else {
+    //             setValues({ ...values, message: data.message, email: '', name:'', description:'', showForm: true,});
+    //             Swal.fire({
+    //               title:  data.message,
+    //               showClass: {
+    //                 popup: 'animate__animated animate__fadeInDown'
+    //               },
+    //               hideClass: {
+    //                 popup: 'animate__animated animate__fadeOutUp'
+    //               }
+    //             })
+    //         }
+    //     });
+    // };
     const handleSubmit = e => {
       e.preventDefault();
-        setValues({ ...values, message: '', error: '' });
-        contactFormSendEmail({ email, name, description }).then(data => {
-            if (data.error) {
-                setValues({ ...values, error: data.error });
-            } else {
-                setValues({ ...values, message: data.message, email: '', name:'', description:'', showForm: true,});
-                Swal.fire({
-                  title:  data.message,
-                  showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                  },
-                  hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
+      if (!executeRecaptcha) {
+          console.log("Execute recaptcha not yet available");
+          return;
+      }
+      executeRecaptcha("complaint").then((gReCaptchaToken) => {
+          console.log(gReCaptchaToken, "response Google reCaptcha server");
+          submitComplainForm(gReCaptchaToken);
+      });
+
+      const submitComplainForm = (gReCaptchaToken) => {
+          fetch("/api/recaptcha", {
+              method: "POST",
+              headers: {
+              Accept: "application/json, text/plain, */*", "Content-Type": "application/json",},
+              body: JSON.stringify({
+                  name: name,
+                  email: email,
+                  message: message,
+                  gRecaptchaToken: gReCaptchaToken,
+              }),}).then((res) => res.json()).then((res) => {
+                  console.log(res, "response from backend");
+                  if (res?.status === "success") {
+                      // Human so submit the complain form
+                      setValues({...values, message: '', error: ''});
+                      contactFormSendEmail({email, name, description}).then(data => {
+                          if (data.error) {
+                              setValues({...values, error: data.error});
+                          } else {
+                              setValues({...values, message: data.message, email: '', name: '', description: '', showForm: true,});
+                              Swal.fire({
+                                  title: data.message,
+                                  showClass: {
+                                      popup: 'animate__animated animate__fadeInDown'
+                                  },
+                                  hideClass: {
+                                      popup: 'animate__animated animate__fadeOutUp'
+                                  }
+                              })
+                          }
+                      });
+                  } else {
+                    Swal.fire({
+                      title: "Robot",
+                      showClass: {
+                          popup: 'animate__animated animate__fadeInDown'
+                      },
+                      hideClass: {
+                          popup: 'animate__animated animate__fadeOutUp'
+                      }
+                  })
+                      {/*Action to do if not a human*/}
                   }
-                })
-            }
-        });
-    };
+              });
+      };
+  }
 
     const showError = () => (error ? <div className="alert alert-danger alert-dismissible fade show" role="alert">{error} 
     <button type="button" class="btn-close" data-dismiss="alert" aria-label="Close"></button></div> : '');
@@ -72,7 +131,7 @@ const Ankesat = () =>{
 
     const ankesatForm = () => (
         <>
-            <p className="headerTitle mt-5">{langType == 0 ? "ANKESA" : "COMPLAINTS"}</p>
+            <p className="headerTitle">{langType == 0 ? "ANKESA" : "COMPLAINTS"}</p>
             <div className="complainForm">
                 <form className="" onSubmit={handleSubmit} data-toggle="modal" data-target="#exampleModalCenter">
                     <label htmlFor="" className="lab1">{langType == 0 ? "Emri*" : "Name*"}</label>
@@ -117,7 +176,19 @@ const Ankesat = () =>{
         </div>
         </MainLayout>
     );
+
+    
 };
 
+export default function ComplainPage(){
+    return (
+      <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_PUBLIC_WEBSITE_KEY} scriptProps={{
+              async: false,
+              defer: false,
+              appendTo: "head",
+              nonce: undefined,}}>
+        <Ankesat />
+      </GoogleReCaptchaProvider>
+    );
+  }
 
-export default Ankesat;

@@ -4,13 +4,13 @@ import NewsletterSubscribe from "../components/NewsLetterSubscribe";
 import JobOpeningsSubscribe from "../components/JobOpeningsSubscribe";
 import { careerFormSendEmail } from '../actions/auth';
 import { useState, useEffect, useRef } from 'react';
-import moment from 'moment';
 import { API, TRY } from '../config';
 import { Parser } from 'html-to-react';
 import MainLayout from "../components/MainLayout";
 import Swal from 'sweetalert2';
-// import DatePicker from "react-datepicker";
-// import "react-datepicker/dist/react-datepicker.css";
+import {useGoogleReCaptcha} from "react-google-recaptcha-v3";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+
 
 export default function KonkursPune({router, careers, openings}){
 
@@ -46,33 +46,62 @@ export default function KonkursPune({router, careers, openings}){
       }, [router]);
 
 
+      const { executeRecaptcha } = useGoogleReCaptcha();
       const handleSubmit = e => {
         e.preventDefault();
-        careerFormSendEmail(formData).then(data => {
-            if (data.error) {
-                setValues({ ...values, error: data.error });
-                Swal.fire({
-                  title: data.error,
-                  showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                  },
-                  hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                  }
-                })
-            } else {
-                setValues({ ...values,  email: '', name:'', birthday:'', lastName:'', position:'', phone:'', error: '', message: data.message});
-                Swal.fire({
-                  title: data.message,
-                  showClass: {
-                    popup: 'animate__animated animate__fadeInDown'
-                  },
-                  hideClass: {
-                    popup: 'animate__animated animate__fadeOutUp'
-                  }
-                })
-            }
+        if (!executeRecaptcha) {
+            console.log("Execute recaptcha not yet available");
+            return;
+        }
+        executeRecaptcha("job_openings").then((gReCaptchaToken) => {
+            console.log(gReCaptchaToken, "response Google reCaptcha server");
+            submitJobOpeningsForm(gReCaptchaToken);
         });
+
+        const submitJobOpeningsForm = (gReCaptchaToken) => {
+            fetch("/api/recaptcha", {
+                method: "POST",
+                headers: {
+                Accept: "application/json, text/plain, */*", "Content-Type": "application/json",},
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    message: message,
+                    gRecaptchaToken: gReCaptchaToken,
+                }),}).then((res) => res.json()).then((res) => {
+                    console.log(res, "response from backend");
+                    if (res?.status === "success") {
+                        // Human so submit the application
+                        careerFormSendEmail(formData).then(data => {
+                            if (data.error) {
+                                setValues({ ...values, error: data.error });
+                                Swal.fire({
+                                    title: data.error,
+                                    showClass: {
+                                        popup: 'animate__animated animate__fadeInDown'
+                                    },
+                                    hideClass: {
+                                        popup: 'animate__animated animate__fadeOutUp'
+                                    }
+                                })
+                            } else {
+                                setValues({ ...values,  email: '', name:'', birthday:'', lastName:'', position:'', phone:'', error: '', message: data.message});
+                                Swal.fire({
+                                    title: data.message,
+                                    showClass: {
+                                        popup: 'animate__animated animate__fadeInDown'
+                                    },
+                                    hideClass: {
+                                        popup: 'animate__animated animate__fadeOutUp'
+                                    }
+                                })
+                            }
+                        });
+                    } else {
+                        {/*Action to do if not a human*/}
+                    }
+                });
+        }
       };
 
 
@@ -96,10 +125,27 @@ export default function KonkursPune({router, careers, openings}){
 
 
     const showCareers = () => {
+      return careers.map((career, i) => {
           return (
             <>
           <p className="jobtitlepage">{langType == 0 ? "KONKURS PUNE" : "JOB OPENINGS"}</p>
              <div className="jobofferSpace">
+                <div className="joboffer">
+                  <p className="joboffertitle">{langType == 0 ? career.careerTitle : career.careerTitle_en}</p>
+                  <p className="jobofferdesc">
+                     {Parser().parse(langType == 0 ? career.careerDescription : career.careerDescription_en)} 
+                  </p>
+                </div>
+
+                  <div className="openjobsp">
+                    <p>POZITAT E HAPURA (KLIKO KËTU PËR TA SHKARKUAR APLIKACIONIN){langType == 0 ? "POZITAT E HAPURA" : "JOB OPENINGS"}</p>
+                    <ul>
+                      {openings.map((opening, i) => (     
+                       <li key={i}>{langType == 0 ? opening.name : opening.name_en}</li>
+                      ))}
+                    </ul>
+                  </div>
+
                    <div>
                       <form onSubmit={handleSubmit} className="jobofferForm">
                          <input type="text" id="name" placeholder={langType == 0 ? "Emri" : "Name"}
@@ -125,10 +171,10 @@ export default function KonkursPune({router, careers, openings}){
                                 onChange={handleChange('position')}
                                 type="text"
                                 placeholder="Select Position">
-                                  <option value="" disabled selected hidden>Zgjedh poziten</option>
-                                    <option value="Option 1">1</option>
-                                    <option value="Option 2">2</option>
-                                    <option value="Option 3">3</option>
+                                  <option value="" disabled selected>{langType == 0 ? "Zgjedh Pozicionin" : "Select Position"}</option>
+                                {openings.map((opening, i) => ( 
+                                <option key={i}>{langType == 0 ? opening.name : opening.name_en}</option>
+                                ))}
                             </select>
                           </div>
                         {/* </div> */}
@@ -161,11 +207,13 @@ export default function KonkursPune({router, careers, openings}){
     
           </>
           );
+       });
    };
 
 
 
     return(
+
       <MainLayout setLangType={setLangType} langType={langType}>
         <div>
         
@@ -174,9 +222,33 @@ export default function KonkursPune({router, careers, openings}){
         <JobOpeningsSubscribe setLangType={setLangType} langType={langType}/>
         </div>
       </MainLayout>
+
     )
 }
 
 
+// export default function KonkursPune(){
+//   return (
+//     <GoogleReCaptchaProvider reCaptchaKey={process.env.NEXT_PUBLIC_RECAPTCHA_PUBLIC_WEBSITE_KEY} scriptProps={{
+//             async: false,
+//             defer: false,
+//             appendTo: "head",
+//             nonce: undefined,}}>
+//       <KonkursPune />
+//     </GoogleReCaptchaProvider>
+//   );
+// }
 
+
+export async function getServerSideProps(){
+  const [careersRes, openingsRes] = await Promise.all([
+      fetch(`${API}/career`),
+      fetch(`${API}/openings`),
+    ]);
+    const [careers, openings] = await Promise.all([
+      careersRes.json(), 
+      openingsRes.json()
+    ]);
+    return { props: {careers, openings} }; 
+};
 

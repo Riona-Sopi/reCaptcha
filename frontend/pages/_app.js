@@ -13,7 +13,7 @@ import "../styles/globals.css";
 import "../styles/signup.css";
 import "../styles/dashboard.css";
 import { useCallback } from "react";
-
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import { useState } from "react";
 
 function MyApp({ Component, pageProps }) {
@@ -86,7 +86,9 @@ function MyApp({ Component, pageProps }) {
           />
         </Head>
 
-        <Component {...pageProps} />
+
+          <Component {...pageProps} />
+     
       </>
     );
   }
